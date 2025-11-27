@@ -12,7 +12,6 @@ import { initSorting } from "./components/sorting.js";
 import { initFiltering } from "./components/filtering.js";
 import { initSearching } from "./components/searching.js";
 
-// Инициализируем API для работы с данными
 const api = initData(sourceData);
 
 const applySearching = initSearching("search");
@@ -39,19 +38,24 @@ function collectState() {
  * @param {HTMLButtonElement?} action
  */
 async function render(action) {
-    let state = collectState();
-    let query = {}; // Заменяем let result = [...data] на let query = {}
+    let state = collectState(); // состояние полей из таблицы
+    let query = {}; // здесь будут формироваться параметры запроса
 
-    // Применяем все обработчики
+    // Применяем обработчики
     query = applySearching(query, state, action);
     query = applyFiltering(query, state, action);
     query = applySorting(query, state, action);
+    
+    // Применяем пагинацию ДО запроса данных
     query = applyPagination(query, state, action);
 
-    // Получаем актуальные данные через API
+    // Запрашиваем данные с собранными параметрами
     const { total, items } = await api.getRecords(query);
 
-    // Передаём items в render вместо result
+    // Перерисовываем пагинатор ПОСЛЕ получения данных
+    updatePagination(total, query);
+
+    // Рендерим таблицу
     sampleTable.render(items);
 }
 
@@ -66,10 +70,9 @@ const sampleTable = initTable({
 let applyFiltering;
 let applySorting;
 let applyPagination;
+let updatePagination;
 
-// Асинхронная функция инициализации
 async function init() {
-    // Получаем индексы через API
     const indexes = await api.getIndexes();
 
     applyFiltering = initFiltering(sampleTable.filter.elements, {
@@ -81,7 +84,8 @@ async function init() {
         sampleTable.header.elements.sortByTotal
     ]);
 
-    applyPagination = initPagination(
+    // Обновляем инициализацию пагинации — получаем две функции
+    ({ applyPagination, updatePagination }) = initPagination(
         sampleTable.pagination.elements,
         (el, page, isCurrent) => {
             const input = el.querySelector('input');
@@ -97,5 +101,4 @@ async function init() {
 const appRoot = document.querySelector('#app');
 appRoot.appendChild(sampleTable.container);
 
-// Заменяем прямой вызов render на init().then(render)
 init().then(render);
