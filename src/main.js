@@ -53,6 +53,9 @@ async function render(action) {
     // Применяем поиск
     query = applySearching(query, state, action);
 
+    // Применяем сортировку 
+    query = applySorting(query, state, action);
+
     // Запрашиваем данные с собранными параметрами
     const { total, items } = await api.getRecords(query);
 
