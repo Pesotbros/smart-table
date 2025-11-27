@@ -43,16 +43,17 @@ async function render(action) {
 
     // Применяем обработчики
     query = applySearching(query, state, action);
-    query = applyFiltering(query, state, action);
-    query = applySorting(query, state, action);
     
-    // Применяем пагинацию ДО запроса данных
+    // Применяем фильтрацию
+    query = applyFiltering(query, state, action);
+    
+    query = applySorting(query, state, action);
     query = applyPagination(query, state, action);
 
     // Запрашиваем данные с собранными параметрами
     const { total, items } = await api.getRecords(query);
 
-    // Перерисовываем пагинатор ПОСЛЕ получения данных
+    // Перерисовываем пагинатор после получения данных
     updatePagination(total, query);
 
     // Рендерим таблицу
@@ -68,6 +69,7 @@ const sampleTable = initTable({
 
 // Инициализация
 let applyFiltering;
+let updateIndexes;
 let applySorting;
 let applyPagination;
 let updatePagination;
@@ -75,16 +77,19 @@ let updatePagination;
 async function init() {
     const indexes = await api.getIndexes();
 
-    applyFiltering = initFiltering(sampleTable.filter.elements, {
-        searchBySeller: indexes.sellers
-    });
+    // Обновляем инициализацию фильтрации — получаем две функции
+    ({ applyFiltering, updateIndexes }) = initFiltering(
+        sampleTable.filter.elements,
+        {
+            searchBySeller: indexes.sellers
+        }
+    );
 
     applySorting = initSorting([
         sampleTable.header.elements.sortByDate,
         sampleTable.header.elements.sortByTotal
     ]);
 
-    // Обновляем инициализацию пагинации — получаем две функции
     ({ applyPagination, updatePagination }) = initPagination(
         sampleTable.pagination.elements,
         (el, page, isCurrent) => {
@@ -96,6 +101,11 @@ async function init() {
             return el;
         }
     );
+
+    // Обновляем индексы в интерфейсе
+    updateIndexes(sampleTable.filter.elements, {
+        searchBySeller: indexes.sellers
+    });
 }
 
 const appRoot = document.querySelector('#app');
