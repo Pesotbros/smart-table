@@ -84,19 +84,20 @@ async function init() {
     const indexes = await api.getIndexes();
 
     // Обновляем инициализацию фильтрации — получаем две функции
-    ({ applyFiltering, updateIndexes }) = initFiltering(
-        sampleTable.filter.elements,
-        {
-            searchBySeller: indexes.sellers
-        }
-    );
+    ({applyFiltering, updateIndexes} = initFiltering(
+    sampleTable.filter.elements,
+    {
+        searchBySeller: indexes.sellers
+    }
+));
+
 
     applySorting = initSorting([
         sampleTable.header.elements.sortByDate,
         sampleTable.header.elements.sortByTotal
     ]);
 
-    ({ applyPagination, updatePagination }) = initPagination(
+    ({applyPagination, updatePagination} = initPagination(
         sampleTable.pagination.elements,
         (el, page, isCurrent) => {
             const input = el.querySelector('input');
@@ -106,7 +107,7 @@ async function init() {
             label.textContent = page;
             return el;
         }
-    );
+    ));
 
     // Обновляем индексы в интерфейсе
     updateIndexes(sampleTable.filter.elements, {
